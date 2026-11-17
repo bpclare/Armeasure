@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- the measured line, corner to corner -->
+    <path android:strokeColor="#3DDC84" android:strokeWidth="5" android:strokeLineCap="round"
+        android:pathData="M34,74 L74,34" />
+    <!-- ticks along it -->
+    <path android:strokeColor="#3DDC84" android:strokeWidth="3" android:strokeLineCap="round"
+        android:pathData="M44,64 L48,68 M54,54 L60,60 M64,44 L68,48" />
+    <!-- the two points -->
+    <path android:fillColor="#FFFFFF" android:pathData="M34,74 m-7,0 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0" />
+    <path android:fillColor="#FFFFFF" android:pathData="M74,34 m-7,0 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0" />
+</vector>
