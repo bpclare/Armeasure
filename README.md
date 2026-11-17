@@ -28,7 +28,7 @@ Items live in the app's own files (`files/items/<id>/item.json` and its photos).
 
 ## Install and updates
 
-1. On the phone, open the repo's **Releases**, download the latest `ar-measure-N.apk`, open it, and allow installs
+1. On the phone, open the repo's **Releases**, download the latest `measure-N.apk`, open it, and allow installs
    from the browser when Android asks.
 2. After that the app checks GitHub when it opens; **Update ready → INSTALL** downloads the new build and Android asks
    once to confirm (the first time, allow installs from AR Measure).

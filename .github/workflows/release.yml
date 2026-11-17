@@ -58,6 +58,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp app/build/outputs/apk/release/app-release.apk "ar-measure-$CODE.apk"
+          cp app/build/outputs/apk/release/app-release.apk "measure-$CODE.apk"
           git log -1 --format=%B > notes.txt
-          gh release create "v$CODE" "ar-measure-$CODE.apk" --title "Build $CODE" --notes-file notes.txt --latest
+          gh release create "v$CODE" "measure-$CODE.apk" --title "Build $CODE" --notes-file notes.txt --latest
