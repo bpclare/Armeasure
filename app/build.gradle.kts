@@ -9,7 +9,7 @@ plugins {
 // CI passes -PversionCode (the run number + 1) and -PupdateRepo (owner/name); the app checks that repo's latest
 // release for a newer versionCode. The release key's password comes from KEYSTORE_PASSWORD (a GitHub secret in CI).
 val buildCode = (findProperty("versionCode") as String?)?.toIntOrNull() ?: 1
-val updateRepo = (findProperty("updateRepo") as String?) ?: "bpclare/measure"
+val updateRepo = (findProperty("updateRepo") as String?) ?: "bpclare/Armeasure"
 val keystorePassword: String? = System.getenv("KEYSTORE_PASSWORD") ?: (findProperty("keystorePassword") as String?)
 
 android {
