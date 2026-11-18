@@ -22,15 +22,15 @@ with the Fold closed or open, upright or sideways.
 
 | # | What | State | Commit | Verified | Undo |
 |---|---|---|---|---|---|
-| 1 | Screens as a stack with Back rules; root Back minimizes | | | | |
-| 2 | Theme follows the phone (light and dark) | | | | |
-| 3 | Restorable deletes (items, measurements, photos; Trash) | | | | |
-| 4 | Editable checklists in Settings | | | | |
-| 5 | Full-screen editors (new item, rename, measurement, AR naming) | | | | |
-| 6 | Settings (units, checklists, Trash, help, build and commit, updates) and Help | | | | |
-| 7 | AR any orientation and size (Fold) | | | | |
-| 8 | Back tests for every screen and layer; dashes gone | | | | |
-| 9 | Push, CI, release build 3 verified | | | | |
+| 1 | Screens as a stack with Back rules; root Back minimizes | Done | 1e35a81 | BackNavigationTest (root, item, photo, settings, help, trash) | git revert 1e35a81 |
+| 2 | Theme follows the phone (light and dark) | Done | 1e35a81 | Builds; to see on the phone | git revert 1e35a81 |
+| 3 | Restorable deletes (items, measurements, photos; Trash) | Done | 1e35a81 | DataTest, UNDO and Trash tests | git revert 1e35a81 |
+| 4 | Editable checklists in Settings | Done | 1e35a81 | DataTest checklist store; editor Back test | git revert 1e35a81 |
+| 5 | Full-screen editors (new item, rename, measurement, AR naming) | Done | 1e35a81 | Back saves tests; guards fail when reverted | git revert 1e35a81 |
+| 6 | Settings (units, checklists, Trash, help, build and commit, updates) and Help | Done | 1e35a81 | Back tests; buildLabel on Home and Settings | git revert 1e35a81 |
+| 7 | AR any orientation and size (Fold) | Done | 1e35a81 | Builds; only the phone can show AR turning | git revert 1e35a81 |
+| 8 | Back tests for every screen and layer; dashes gone | Done | 1e35a81 | 28 tests pass; 3 guards fail when their fix is removed | git revert 1e35a81 |
+| 9 | Push, CI, release build 3 verified | In progress | 1e35a81 | | |
 
 ## How to resume
 
