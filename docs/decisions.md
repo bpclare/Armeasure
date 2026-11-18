@@ -10,3 +10,7 @@ Bryan's answers, newest last. A later answer names what it replaces.
 | Nov 17, 2026 | Phones and users | "just android just me using it". So native Android (ARCore), not a web page; no accounts |
 | Nov 17, 2026 | What it measures | "it won't just be for car seats that's just one example and one of the first things I want to try": general items, car seat as the first checklist |
 | Nov 17, 2026 | Repo name | "measure", then created as "Armeasure" (replaces "measure") |
+| Nov 18, 2026 | Bring the app in line with the new global rules (theme follows the phone, full-screen editors, restorable deletes, in-app help, commit shown, no dashes) | "Fix all now" |
+| Nov 18, 2026 | Mockups for those rule fixes | "Build straight" (no mockup round for rule fixes) |
+| Nov 18, 2026 | Checklists | "Editable in settings": add, rename, reorder, remove steps; make new checklists; car seat and box become starting copies |
+| Nov 18, 2026 | Fold | "Both": AR works folded or open, turned any way |
