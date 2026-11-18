@@ -4,7 +4,9 @@ Open items first. Tick them off here (or tell Claude and it will).
 
 ## Open
 
-1. Try AR Measure on a real seat with a tape measure alongside: measure each checklist item in AR, then type the tape
+1. Install build 3: open AR Measure, tap INSTALL on "Update ready", confirm. The bottom of Home should say
+   "Build 3 · ac9262b".
+2. Try AR Measure on a real seat with a tape measure alongside: measure each checklist item in AR, then type the tape
    reading into each one (tap the measurement, "Tape reading"). Tell Claude what is off.
 
 ## Done

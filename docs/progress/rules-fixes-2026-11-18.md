@@ -30,7 +30,7 @@ with the Fold closed or open, upright or sideways.
 | 6 | Settings (units, checklists, Trash, help, build and commit, updates) and Help | Done | 1e35a81 | Back tests; buildLabel on Home and Settings | git revert 1e35a81 |
 | 7 | AR any orientation and size (Fold) | Done | 1e35a81 | Builds; only the phone can show AR turning | git revert 1e35a81 |
 | 8 | Back tests for every screen and layer; dashes gone | Done | 1e35a81 | 28 tests pass; 3 guards fail when their fix is removed | git revert 1e35a81 |
-| 9 | Push, CI, release build 3 verified | In progress | 1e35a81 | | |
+| 9 | Push, CI, release build 3 verified | Done | 1e35a81 | CI run 2 passed; v3 APK downloaded: signer c30bedad, versionCode 3, commit ac9262b | revert, push |
 
 ## How to resume
 
@@ -39,4 +39,6 @@ not Done. The SDK setup is in HANDOFF.md.
 
 ## For Bryan
 
-- Nothing needed until build 3 is out; then open the app and tap INSTALL.
+- Build 3 is out (Nov 18). Open AR Measure, tap INSTALL on Update ready, and check the bottom of Home says
+  "Build 3 · ac9262b".
+- On the phone (the tests can't): AR folded and opened, upright and sideways; the light theme outdoors.
