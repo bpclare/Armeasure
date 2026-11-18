@@ -8,40 +8,80 @@ import android.media.ExifInterface
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.bpclare.armeasure.geo.LengthUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
+/** The AR green: the ring, the lines, the photos' drawing (always on the camera, so one shade). */
 val Green = Color(0xFF3DDC84)
 
-@Composable
-fun AppTheme(content: @Composable () -> Unit) = MaterialTheme(
-    colorScheme = darkColorScheme(
-        primary = Green,
-        onPrimary = Color.Black,
-        secondary = Green,
-        onSecondary = Color.Black,
-        background = Color(0xFF111315),
-        surface = Color(0xFF16191C),
-        surfaceVariant = Color(0xFF22262A),
-    ),
-    content = content,
+// Light follows the phone (Bryan's rules, Nov 18: "Light/dark follows the phone. Readable outdoors."). The light
+// scheme is high contrast for sunlight: near-black text on white, a darker green that holds up outdoors.
+private val Light = lightColorScheme(
+    primary = Color(0xFF0B6B37),
+    onPrimary = Color.White,
+    secondary = Color(0xFF0B6B37),
+    onSecondary = Color.White,
+    background = Color(0xFFF6F7F6),
+    onBackground = Color(0xFF111412),
+    surface = Color.White,
+    onSurface = Color(0xFF111412),
+    surfaceVariant = Color(0xFFE3E8E4),
+    onSurfaceVariant = Color(0xFF39433D),
+    error = Color(0xFFB3261E),
 )
+
+private val Dark = darkColorScheme(
+    primary = Green,
+    onPrimary = Color.Black,
+    secondary = Green,
+    onSecondary = Color.Black,
+    background = Color(0xFF111315),
+    surface = Color(0xFF16191C),
+    surfaceVariant = Color(0xFF262B2F),
+    onSurfaceVariant = Color(0xFFC2C9C4),
+    error = Color(0xFFFFB4A9),
+)
+
+@Composable
+fun AppTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) =
+    MaterialTheme(colorScheme = if (dark) Dark else Light, content = content)
+
+/** Screens keep a readable width on the Fold opened up or a tablet: centered, at most 720 dp wide. */
+@Composable
+fun Centered(content: @Composable BoxScope.() -> Unit) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        Box(Modifier.widthIn(max = 720.dp).fillMaxSize(), content = content)
+    }
+}
+
+/** The back arrow in a screen's top bar. */
+@Composable
+fun BackButton(onClick: () -> Unit) = TextButton(onClick = onClick) { Text("‹ BACK", fontSize = 15.sp) }
 
 object Prefs {
     private fun p(ctx: Context) = ctx.getSharedPreferences("prefs", Context.MODE_PRIVATE)
@@ -82,7 +122,7 @@ fun Thumb(file: File?, modifier: Modifier = Modifier, maxPx: Int = 400, crop: Bo
     Box(
         modifier
             .clip(RoundedCornerShape(8))
-            .background(Color(0xFF2A2E33))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .let { if (onClick != null) it.clickable(onClick = onClick) else it },
     ) {
         bmp?.let { Image(it, null, Modifier.fillMaxSize(), contentScale = if (crop) ContentScale.Crop else ContentScale.Fit) }

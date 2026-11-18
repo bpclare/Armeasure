@@ -57,7 +57,7 @@ class MeasureRenderer(
     private val main = Handler(Looper.getMainLooper())
     private var w = 0
     private var h = 0
-    private var geometryChanged = false
+    @Volatile private var geometryChanged = false
     private val anchors = mutableListOf<Anchor>()
     private var kind = Kind.LINE
     private val view = FloatArray(16)
@@ -131,6 +131,11 @@ class MeasureRenderer(
             clear()
             main.post { onCaptured(out) }
         }
+    }
+
+    /** The display turned or changed size (the Fold opened): the next frame sets the new geometry. */
+    fun displayChanged() {
+        geometryChanged = true
     }
 
     private fun clear() {

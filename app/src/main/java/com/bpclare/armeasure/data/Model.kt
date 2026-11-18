@@ -22,6 +22,8 @@ data class Measurement(
     /** The photo's file name in the item's folder, with the measurement drawn on. */
     val photo: String? = null,
     val createdAt: Long,
+    /** Set when deleted: hidden, kept, restorable. */
+    val deletedAt: Long? = null,
 ) {
     val meters: Double? get() = tapeMeters ?: arMeters
 }
@@ -37,7 +39,15 @@ data class Item(
     val measurements: List<Measurement> = emptyList(),
     /** Plain photos (the system camera's) in the item's folder. */
     val photos: List<String> = emptyList(),
-)
+    /** Plain photos deleted: their files kept, restorable. */
+    val deletedPhotos: List<String> = emptyList(),
+    /** Set when the item is in Trash. */
+    val deletedAt: Long? = null,
+) {
+    /** The measurements not deleted. */
+    val live: List<Measurement> get() = measurements.filter { it.deletedAt == null }
+    val deletedMeasurements: List<Measurement> get() = measurements.filter { it.deletedAt != null }
+}
 
 object ItemJson {
     fun toJson(i: Item): JSONObject = JSONObject().apply {
@@ -50,6 +60,8 @@ object ItemJson {
         put("updatedAt", i.updatedAt)
         put("measurements", JSONArray().apply { i.measurements.forEach { put(toJson(it)) } })
         put("photos", JSONArray().apply { i.photos.forEach { put(it) } })
+        put("deletedPhotos", JSONArray().apply { i.deletedPhotos.forEach { put(it) } })
+        put("deletedAt", i.deletedAt ?: JSONObject.NULL)
     }
 
     fun toJson(m: Measurement): JSONObject = JSONObject().apply {
@@ -61,6 +73,7 @@ object ItemJson {
         put("points", JSONArray().apply { m.points.forEach { p -> put(JSONArray().put(p.x).put(p.y).put(p.z)) } })
         put("photo", m.photo ?: JSONObject.NULL)
         put("createdAt", m.createdAt)
+        put("deletedAt", m.deletedAt ?: JSONObject.NULL)
     }
 
     fun item(o: JSONObject): Item = Item(
@@ -72,6 +85,8 @@ object ItemJson {
         updatedAt = o.optLong("updatedAt", o.optLong("createdAt")),
         measurements = o.optJSONArray("measurements")?.let { a -> (0 until a.length()).map { measurement(a.getJSONObject(it)) } }.orEmpty(),
         photos = o.optJSONArray("photos")?.let { a -> (0 until a.length()).map { a.getString(it) } }.orEmpty(),
+        deletedPhotos = o.optJSONArray("deletedPhotos")?.let { a -> (0 until a.length()).map { a.getString(it) } }.orEmpty(),
+        deletedAt = o.optLongOrNull("deletedAt"),
     )
 
     fun measurement(o: JSONObject): Measurement = Measurement(
@@ -85,8 +100,10 @@ object ItemJson {
         }.orEmpty(),
         photo = o.optStr("photo"),
         createdAt = o.optLong("createdAt"),
+        deletedAt = o.optLongOrNull("deletedAt"),
     )
 
+    private fun JSONObject.optLongOrNull(k: String): Long? = if (has(k) && !isNull(k)) getLong(k) else null
     private fun JSONObject.optNum(k: String): Double? = if (has(k) && !isNull(k)) getDouble(k) else null
     private fun JSONObject.optStr(k: String): String? = if (has(k) && !isNull(k)) getString(k) else null
 }

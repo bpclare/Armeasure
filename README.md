@@ -19,6 +19,17 @@ any surface (fabric, curves), where the window tool needed a flat wall.
 - Each measurement can take a tape reading typed over it (the app shows how far AR was off), be renamed, retaken or
   deleted. Inches (to the ¼) or centimeters, switched on Home.
 - Best from 1 to 3 feet away, in good light, moving the phone slowly at first so ARCore can find its place.
+- Works with the Fold closed or open, upright or sideways. Light or dark follows the phone.
+
+## Checklists, Trash, Settings, Help
+
+- Checklists (car seat, box, and any you make) are edited in Settings: rename, reorder, add, remove, straight line or
+  trace. Removed steps stay restorable on the checklist.
+- Nothing is deleted for good by accident: a deleted measurement or photo is listed at the bottom of its item with
+  RESTORE, a deleted item or checklist goes to Trash, and UNDO shows right after any delete. A RETAKE keeps the old
+  reading as a deleted one.
+- Editors are full screen; Back keeps what was typed. At Home, Back puts the app in the background.
+- Help (Home, ⋯) and the ? on the AR screen explain measuring. Settings shows the build and its commit.
 
 ## Storage
 
@@ -46,8 +57,10 @@ debug APK, `KEYSTORE_PASSWORD=... ./gradlew assembleRelease -PversionCode=N` for
 ## Layout
 
 - `geo/Geometry.kt`: distances, traces, inches and centimeters, tape parsing, the projection. Pure, unit-tested.
-- `data/`: the model and its JSON, the on-phone store, the checklists (`Templates.kt`: car seat, box).
+- `data/`: the model and its JSON, the on-phone store with Trash, the checklists and their store (`Templates.kt`).
 - `ar/`: the AR screen (`MeasureActivity`), the frame loop and hit test (`MeasureRenderer`), the camera background,
   and the overlay drawn on the screen and on the photo.
-- `ui/`: Home, the item screen, export, the theme.
+- `ui/`: Home, the item screen, the full-screen editors, Settings (checklist editor, Trash, Help), export, the theme.
+  `MainActivity` holds the screen stack and the Back rules.
+- Tests: `app/src/test/`: the logic, plus Back on every screen and layer (Robolectric, no phone needed).
 - `update/Updater.kt`: the GitHub release check, download and install.

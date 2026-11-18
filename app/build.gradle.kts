@@ -10,6 +10,11 @@ plugins {
 // release for a newer versionCode. The release key's password comes from KEYSTORE_PASSWORD (a GitHub secret in CI).
 val buildCode = (findProperty("versionCode") as String?)?.toIntOrNull() ?: 1
 val updateRepo = (findProperty("updateRepo") as String?) ?: "bpclare/Armeasure"
+// The commit this build was made from, shown in the app beside the build number (Bryan's rules: "Version and commit
+// visible in the app").
+val commit: String = runCatching {
+    providers.exec { commandLine("git", "rev-parse", "--short=7", "HEAD"); isIgnoreExitValue = true }.standardOutput.asText.get().trim()
+}.getOrDefault("").ifEmpty { "local" }
 val keystorePassword: String? = System.getenv("KEYSTORE_PASSWORD") ?: (findProperty("keystorePassword") as String?)
 
 android {
@@ -23,6 +28,7 @@ android {
         versionCode = buildCode
         versionName = "build $buildCode"
         buildConfigField("String", "UPDATE_REPO", "\"$updateRepo\"")
+        buildConfigField("String", "COMMIT", "\"$commit\"")
     }
 
     signingConfigs {
@@ -53,6 +59,7 @@ android {
 
     testOptions {
         unitTests.isReturnDefaultValues = true
+        unitTests.isIncludeAndroidResources = true
     }
 }
 
@@ -71,4 +78,11 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
+    // The screens' Back tests run on the computer (Robolectric), no phone needed.
+    testImplementation(platform("androidx.compose:compose-bom:2025.12.01"))
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    testImplementation("org.robolectric:robolectric:4.16.1")
+    testImplementation("androidx.test:core-ktx:1.6.1")
+    testImplementation("androidx.test.ext:junit:1.2.1")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

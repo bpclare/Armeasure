@@ -32,15 +32,22 @@ photos). Started from Contrain's AR window measure (bpclare/Contrain `web/photos
   BOM 2025.12.01 on purpose. Upgrading is its own step.
 - AR accuracy is unproven until Bryan's tape comparison. Don't claim inches of accuracy that haven't been measured.
 - The ARCore hit test accepts depth points, planes (inside their outline) and feature points, nearest first.
+- Nothing is hard-deleted except DELETE FOREVER in Trash: items and checklists carry deletedAt, measurements carry
+  deletedAt, plain photos move to deletedPhotos. Lists, exports and "measured" checks must use `item.live`.
+- Back rules live in `MainActivity` (the screen stack, root Back minimizes) and in each editor's BackHandler (saves or
+  keeps a draft). Every new screen or layer needs a test in BackNavigationTest or ArPanelsBackTest.
+- Checklists live in `files/checklists.json` (seeded from `Checklists.DEFAULTS` the first time). Items refer to one by
+  id; steps match measurements by name.
 
 ## Current work
 
-Build 2 is released (Nov 17, 2026). Waiting on Bryan's first real test on a seat.
+Build 3 (Nov 18, 2026): the app brought in line with the global rules, editable checklists, the Fold. Waiting on
+Bryan's first real test on a seat.
 
 ## In flight / waiting on Bryan
 
 - His first seat test with a tape alongside (docs/for-bryan.md).
-- His answers on bringing the app in line with the Nov 18 global rules (see docs/decisions.md once answered).
+- Rule fixes answered Nov 18 (docs/decisions.md) and built; progress in docs/progress/rules-fixes-2026-11-18.md.
 
 ## Next
 

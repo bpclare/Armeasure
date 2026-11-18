@@ -10,6 +10,6 @@ rule in this file that disagrees. This file keeps only what is specific to this 
   on launch. Docs-only pushes (`.md`) run no CI.
 - Every build must be signed with `app/release.keystore` (password: repo secret `KEYSTORE_PASSWORD`), or the update
   fails to install over the phone's copy. Never replace the key.
-- Tests: `./gradlew testDebugUnitTest` (pure logic: geometry, data, export, updater). AR itself can only be tried on
+- Tests: `./gradlew testDebugUnitTest` (the logic, and Back on every screen with Robolectric). AR itself can only be tried on
   the phone; say so instead of claiming it works.
 - Decisions: `docs/decisions.md`. Steps only Bryan can do: `docs/for-bryan.md`. Handoff: `HANDOFF.md`.

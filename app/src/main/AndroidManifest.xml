@@ -30,9 +30,8 @@
 
         <activity
             android:name=".ar.MeasureActivity"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
-            android:exported="false"
-            android:screenOrientation="portrait" />
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

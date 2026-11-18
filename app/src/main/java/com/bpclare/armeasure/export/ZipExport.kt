@@ -28,7 +28,7 @@ object ZipExport {
     /** Each photo's name in the ZIP: a measurement's "01-Back_height.jpg", a plain photo's "photo-1.jpg". */
     fun photoNames(item: Item): Map<String, String> {
         val out = LinkedHashMap<String, String>()
-        item.measurements.forEachIndexed { i, m ->
+        item.live.forEachIndexed { i, m ->
             m.photo?.let { out[it] = String.format(Locale.US, "%02d-%s.jpg", i + 1, safe(m.name)) }
         }
         item.photos.forEachIndexed { i, p -> out[p] = "photo-${i + 1}.jpg" }
@@ -42,7 +42,7 @@ object ZipExport {
     fun csv(item: Item): String {
         val names = photoNames(item)
         val rows = mutableListOf("name,kind,inches,cm,ar_inches,tape_inches,points,photo")
-        for (m in item.measurements) {
+        for (m in item.live) {
             rows += listOf(
                 cell(m.name),
                 if (m.kind == Kind.PATH) "trace" else "line",
@@ -62,8 +62,8 @@ object ZipExport {
         appendLine("Measured ${day(item.updatedAt)}")
         if (item.notes.isNotBlank()) appendLine("\n${item.notes.trim()}")
         appendLine()
-        for (m in item.measurements) {
-            val v = m.meters?.let { fmtBoth(it, unit) } ?: "—"
+        for (m in item.live) {
+            val v = m.meters?.let { fmtBoth(it, unit) } ?: "not measured"
             val how = buildList {
                 if (m.kind == Kind.PATH) add("traced, ${m.points.size} points")
                 if (m.tapeMeters != null) add("tape")
@@ -83,7 +83,7 @@ object ZipExport {
             }
             text("summary.txt", summary(item, unit))
             text("measurements.csv", csv(item))
-            text("item.json", ItemJson.toJson(item).toString(2))
+            text("item.json", ItemJson.toJson(item.copy(measurements = item.live, deletedPhotos = emptyList())).toString(2))
             for ((file, name) in photoNames(item)) {
                 val f = File(dir, file)
                 if (!f.isFile) continue

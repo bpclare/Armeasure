@@ -14,8 +14,13 @@ class Store(private val root: File) {
 
     fun dir(id: String) = File(root, id)
 
-    fun list(): List<Item> =
-        (root.listFiles() ?: emptyArray()).filter { it.isDirectory }.mapNotNull { get(it.name) }.sortedByDescending { it.updatedAt }
+    private fun all(): List<Item> = (root.listFiles() ?: emptyArray()).filter { it.isDirectory }.mapNotNull { get(it.name) }
+
+    /** The items not in Trash, the last changed first. */
+    fun list(): List<Item> = all().filter { it.deletedAt == null }.sortedByDescending { it.updatedAt }
+
+    /** The items in Trash, the last deleted first. */
+    fun trash(): List<Item> = all().filter { it.deletedAt != null }.sortedByDescending { it.deletedAt }
 
     fun get(id: String): Item? {
         val f = File(dir(id), FILE)
@@ -47,8 +52,19 @@ class Store(private val root: File) {
         return next
     }
 
-    fun delete(id: String) {
-        dir(id).deleteRecursively()
+    /** Moves the item to Trash (kept, restorable). */
+    fun trash(id: String, now: Long = System.currentTimeMillis()) {
+        get(id)?.let { save(it.copy(deletedAt = now)) }
+    }
+
+    /** Brings an item back from Trash. */
+    fun restore(id: String) {
+        get(id)?.let { save(it.copy(deletedAt = null)) }
+    }
+
+    /** Removes an item and its photos for good: only from Trash, asked first. */
+    fun deleteForever(id: String) {
+        if (get(id)?.deletedAt != null) dir(id).deleteRecursively()
     }
 
     /** A new photo's file in the item's folder (prefix-time.jpg); not created. */

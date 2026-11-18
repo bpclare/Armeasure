@@ -3,6 +3,10 @@
 // takes as many as you tap along a curve. Then SAVE (the number) or PHOTO + SAVE (the camera picture with the line and
 // the length drawn on). Saved straight into the item; the next checklist step comes up, so a whole seat is measured
 // without leaving AR (DONE goes back). UNDO takes the last point back.
+//
+// Nov 18 (Bryan's rules): the name picker is a full screen panel (Back keeps what was typed), help is a ? away, a
+// RETAKE keeps the old reading as a deleted, restorable one, and the screen turns with the phone (the Fold, folded or
+// open: "Both").
 package com.bpclare.armeasure.ar
 
 import android.Manifest
@@ -10,11 +14,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.hardware.display.DisplayManager
 import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
@@ -28,13 +34,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -62,15 +67,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import com.bpclare.armeasure.data.Checklist
+import com.bpclare.armeasure.data.ChecklistStore
+import com.bpclare.armeasure.data.Checklists
 import com.bpclare.armeasure.data.Item
 import com.bpclare.armeasure.data.Kind
 import com.bpclare.armeasure.data.Measurement
 import com.bpclare.armeasure.data.Store
-import com.bpclare.armeasure.data.Templates
 import com.bpclare.armeasure.geo.LengthUnit
 import com.bpclare.armeasure.geo.fmtBoth
 import com.bpclare.armeasure.geo.fmtLength
 import com.bpclare.armeasure.ui.AppTheme
+import com.bpclare.armeasure.ui.HELP
 import com.bpclare.armeasure.ui.Green
 import com.bpclare.armeasure.ui.Prefs
 import com.google.ar.core.ArCoreApk
@@ -111,6 +119,7 @@ class MeasureActivity : ComponentActivity() {
     }
 
     private val store by lazy { Store(File(filesDir, "items")) }
+    private val checklists by lazy { ChecklistStore(File(filesDir, "checklists.json")) }
     private val io = Executors.newSingleThreadExecutor()
     private lateinit var itemId: String
     private var replaceId: String? = null
@@ -141,8 +150,8 @@ class MeasureActivity : ComponentActivity() {
 
         renderer = MeasureRenderer(resources.displayMetrics.density, publish = { snap.value = it }, onCaptured = ::saveCaptured)
         renderer.queue += Cmd.Mode(ui.value.kind)
-        @Suppress("DEPRECATION")
-        renderer.rotation = windowManager.defaultDisplay.rotation
+        renderer.rotation = rotationNow()
+        (getSystemService(DISPLAY_SERVICE) as DisplayManager).registerDisplayListener(displays, null)
         surface = GLSurfaceView(this).apply {
             preserveEGLContextOnPause = true
             setEGLContextClientVersion(2)
@@ -151,7 +160,7 @@ class MeasureActivity : ComponentActivity() {
             renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
         }
         val controls = ComposeView(this).apply {
-            setContent { AppTheme { Screen() } }
+            setContent { AppTheme(dark = true) { Screen() } }
         }
         setContentView(FrameLayout(this).apply {
             addView(surface)
@@ -159,16 +168,37 @@ class MeasureActivity : ComponentActivity() {
         })
     }
 
+    @Suppress("DEPRECATION")
+    private fun rotationNow() = windowManager.defaultDisplay.rotation
+
+    /** The phone turned (or the Fold opened): AR redraws for the new rotation and size. */
+    private val displays = object : DisplayManager.DisplayListener {
+        override fun onDisplayAdded(displayId: Int) = Unit
+        override fun onDisplayRemoved(displayId: Int) = Unit
+        override fun onDisplayChanged(displayId: Int) {
+            renderer.rotation = rotationNow()
+            renderer.displayChanged()
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        renderer.rotation = rotationNow()
+        renderer.displayChanged()
+    }
+
+    private fun checklistOf(item: Item?): Checklist? = checklists.get(item?.template)
+
     private fun stepUi(item: Item, name: String, kind: Kind) = MeasureUi(
         name = name,
         kind = kind,
-        hint = Templates.byId(item.template)?.steps?.find { it.name.equals(name, true) }?.hint,
+        hint = checklistOf(item)?.steps?.find { it.name.equals(name, true) }?.hint?.ifBlank { null },
     )
 
     /** The next checklist step not yet measured, else a free measurement keeping the current mode. */
     private fun nextUi(item: Item, kind: Kind): MeasureUi {
-        val step = Templates.nextStep(item)
-        return if (step != null) stepUi(item, step.name, step.kind) else MeasureUi(Templates.defaultName(item), kind)
+        val step = Checklists.nextStep(item, checklistOf(item))
+        return if (step != null) stepUi(item, step.name, step.kind) else MeasureUi(Checklists.defaultName(item), kind)
     }
 
     override fun onResume() {
@@ -231,6 +261,7 @@ class MeasureActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        runCatching { (getSystemService(DISPLAY_SERVICE) as DisplayManager).unregisterDisplayListener(displays) }
         renderer.session = null
         session?.close()
         session = null
@@ -246,12 +277,10 @@ class MeasureActivity : ComponentActivity() {
                     .also { bmp.recycle() }
             }
             val now = System.currentTimeMillis()
-            var old: Measurement? = null
             val item = store.update(itemId, now) { item ->
                 val replace = replaceId?.let { id -> item.measurements.find { it.id == id } }
-                old = replace
                 val m = Measurement(
-                    id = replace?.id ?: Store.newId(),
+                    id = Store.newId(),
                     name = state.name,
                     kind = c.kind,
                     arMeters = c.meters,
@@ -260,10 +289,10 @@ class MeasureActivity : ComponentActivity() {
                     photo = photoName,
                     createdAt = now,
                 )
-                if (replace != null) item.copy(measurements = item.measurements.map { if (it.id == replace.id) m else it })
-                else item.copy(measurements = item.measurements + m)
+                // A retake keeps the old reading (and its photo) as deleted, restorable from the item.
+                val kept = if (replace != null) item.measurements.map { if (it.id == replace.id) it.copy(deletedAt = now) else it } else item.measurements
+                item.copy(measurements = kept + m)
             }
-            old?.photo?.let { store.file(itemId, it).delete() }
             runOnUiThread {
                 val said = "Saved ${state.name}: ${fmtBoth(c.meters, unit)}"
                 if (replaceId != null || item == null) {
@@ -282,6 +311,7 @@ class MeasureActivity : ComponentActivity() {
         val s by snap.collectAsState()
         val u by ui.collectAsState()
         var naming by remember { mutableStateOf(false) }
+        var helping by remember { mutableStateOf(false) }
         val density = resources.displayMetrics.density
 
         LaunchedEffect(u.message) {
@@ -309,6 +339,8 @@ class MeasureActivity : ComponentActivity() {
                             u.hint?.let { Text(it, fontSize = 12.sp, color = Color(0xFFCCCCCC)) }
                         }
                     }
+                    Spacer(Modifier.padding(4.dp))
+                    FilledTonalButton(onClick = { helping = true }) { Text("?", fontWeight = FontWeight.Bold) }
                 }
                 Spacer(Modifier.padding(4.dp))
                 val words = u.error ?: u.message ?: say(s, u)
@@ -330,6 +362,7 @@ class MeasureActivity : ComponentActivity() {
                     Spacer(Modifier.padding(6.dp))
                 }
                 val empty = snapNow?.points.isNullOrEmpty()
+                Column(Modifier.align(Alignment.CenterHorizontally).widthIn(max = 560.dp)) {
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                     listOf(Kind.LINE to "LINE (2 points)", Kind.PATH to "TRACE (a curve)").forEachIndexed { i, (k, label) ->
                         SegmentedButton(
@@ -353,16 +386,21 @@ class MeasureActivity : ComponentActivity() {
                         colors = ButtonDefaults.buttonColors(containerColor = Green, contentColor = Color.Black),
                     ) { Text("PHOTO + SAVE", fontWeight = FontWeight.Bold) }
                 }
+                }
             }
         }
 
-        if (naming) NameDialog(u, onDismiss = { naming = false }) { name, kind ->
-            naming = false
-            val item = store.get(itemId)
-            val next = if (item != null) stepUi(item, name, kind ?: u.kind) else u.copy(name = name)
-            if (empty(s)) renderer.queue += Cmd.Mode(next.kind)
-            ui.value = next.copy(kind = if (empty(s)) next.kind else u.kind)
+        if (naming) {
+            val item = remember { store.get(itemId) }
+            NamePanel(u.name, checklistOf(item), item, unit, onClose = { naming = false }) { name, kind ->
+                naming = false
+                val fresh = store.get(itemId)
+                val next = if (fresh != null) stepUi(fresh, name, kind ?: u.kind) else u.copy(name = name)
+                if (empty(s)) renderer.queue += Cmd.Mode(next.kind)
+                ui.value = next.copy(kind = if (empty(s)) next.kind else u.kind)
+            }
         }
+        if (helping) HelpPanel(onClose = { helping = false })
     }
 
     private fun empty(s: Snap?) = s?.points.isNullOrEmpty()
@@ -388,39 +426,63 @@ class MeasureActivity : ComponentActivity() {
             else -> "Tap along the curve, a point every few inches. SAVE when you reach the end ($n points)."
         }
     }
+}
 
-    @Composable
-    private fun NameDialog(u: MeasureUi, onDismiss: () -> Unit, onPick: (String, Kind?) -> Unit) {
-        val item = remember { store.get(itemId) }
-        val template = Templates.byId(item?.template)
-        var text by remember { mutableStateOf(u.name) }
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text("What are you measuring?") },
-            text = {
-                Column {
-                    OutlinedTextField(text, { text = it }, singleLine = true, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
-                    if (template != null && item != null) {
-                        Spacer(Modifier.padding(4.dp))
-                        Text("${template.name} checklist", fontWeight = FontWeight.Bold)
-                        LazyColumn(Modifier.heightIn(max = 320.dp)) {
-                            items(template.steps) { step ->
-                                val done = Templates.measured(item, step)
-                                Row(
-                                    Modifier.fillMaxWidth().clickable { onPick(step.name, step.kind) }.padding(vertical = 10.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(if (done != null) "✓ " else "○ ", color = if (done != null) Green else Color.Gray)
-                                    Text(step.name, Modifier.weight(1f))
-                                    done?.meters?.let { Text(fmtLength(it, unit), color = Color.Gray) }
-                                }
-                            }
-                        }
+/**
+ * What is being measured, full screen over AR (Bryan's rules: edit screens full screen, Back never drops what was
+ * typed). Pick a checklist step, or type a name and USE NAME. Back uses the typed name when it changed, else closes.
+ */
+@Composable
+internal fun NamePanel(start: String, checklist: Checklist?, item: Item?, unit: LengthUnit, onClose: () -> Unit, onPick: (String, Kind?) -> Unit) {
+    var text by remember { mutableStateOf(start) }
+    val back = { if (text.isNotBlank() && text.trim() != start) onPick(text.trim(), null) else onClose() }
+    BackHandler(onBack = back)
+    Box(Modifier.fillMaxSize().background(Color(0xF2111315)).safeDrawingPadding()) {
+        Column(
+            Modifier.align(Alignment.TopCenter).widthIn(max = 640.dp).fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = back) { Text("‹ BACK", color = Color.White) }
+                Text("What are you measuring?", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
+            }
+            OutlinedTextField(text, { text = it }, singleLine = true, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
+            Button(onClick = { if (text.isNotBlank()) onPick(text.trim(), null) }, modifier = Modifier.fillMaxWidth()) { Text("USE NAME") }
+            if (checklist != null && item != null) {
+                Text("${checklist.name} checklist", fontWeight = FontWeight.Bold, color = Color.White)
+                checklist.steps.forEach { step ->
+                    val done = Checklists.measured(item, step)
+                    Row(
+                        Modifier.fillMaxWidth().clickable { onPick(step.name, step.kind) }.padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(if (done != null) "✓ " else "○ ", color = if (done != null) Green else Color.Gray)
+                        Text(step.name, Modifier.weight(1f), color = Color.White)
+                        done?.meters?.let { Text(fmtLength(it, unit), color = Color.Gray) }
                     }
                 }
-            },
-            confirmButton = { TextButton(onClick = { if (text.isNotBlank()) onPick(text.trim(), null) }) { Text("USE NAME") } },
-            dismissButton = { TextButton(onClick = onDismiss) { Text("CANCEL") } },
-        )
+            }
+        }
+    }
+}
+
+/** Help over AR: the same words as the Help screen. Back closes it. */
+@Composable
+internal fun HelpPanel(onClose: () -> Unit) {
+    BackHandler(onBack = onClose)
+    Box(Modifier.fillMaxSize().background(Color(0xF2111315)).safeDrawingPadding()) {
+        Column(
+            Modifier.align(Alignment.TopCenter).widthIn(max = 640.dp).fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = onClose) { Text("‹ BACK", color = Color.White) }
+                Text("Help", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
+            }
+            HELP.take(3).forEach { (title, body) ->
+                Text(title, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(body, color = Color(0xFFE0E0E0), fontSize = 15.sp)
+            }
+        }
     }
 }
