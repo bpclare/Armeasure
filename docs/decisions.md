@@ -14,3 +14,6 @@ Bryan's answers, newest last. A later answer names what it replaces.
 | Nov 18, 2026 | Mockups for those rule fixes | "Build straight" (no mockup round for rule fixes) |
 | Nov 18, 2026 | Checklists | "Editable in settings": add, rename, reorder, remove steps; make new checklists; car seat and box become starting copies |
 | Nov 18, 2026 | Fold | "Both": AR works folded or open, turned any way |
+| Nov 19, 2026 | New global rule: nothing goes live until "ship" | "Wait for ship". Work collects on the `next` branch; `main` (which publishes the phone update) moves only when Bryan says ship. Replaces "every push to main releases" |
+| Nov 19, 2026 | New global rule: checks use zero Actions minutes | "Keep GitHub building updates". The repo is public, so the release build on Actions costs no minutes; tests still run in the session first |
+| Nov 19, 2026 | New global rule: normal-case labels, build number in the menu | "When next touched". Each screen changes the next time it is worked on for another reason |

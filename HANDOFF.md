@@ -19,7 +19,8 @@ photos). Started from Contrain's AR window measure (bpclare/Contrain `web/photos
   dl.google.com into /opt/android-sdk, then `sdkmanager "platforms;android-36" "build-tools;36.0.0"`, and
   `local.properties` with `sdk.dir=/opt/android-sdk` (gitignored).
 - `./gradlew testDebugUnitTest` for the tests; `./gradlew assembleDebug` to check it builds.
-- Push to `main` to release (see CLAUDE.md). Check the run in Actions and the release's APK afterwards.
+- Work goes to the `next` branch; `main` moves only when Bryan says "ship" (see CLAUDE.md). After a ship, check the
+  run in Actions and download the release's APK to confirm the signer and versionCode.
 
 ## Things that would be got wrong
 

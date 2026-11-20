@@ -44,7 +44,8 @@ Items live in the app's own files (`files/items/<id>/item.json` and its photos).
 2. After that the app checks GitHub when it opens; **Update ready → INSTALL** downloads the new build and Android asks
    once to confirm (the first time, allow installs from AR Measure).
 
-Every push to `main` runs `.github/workflows/release.yml`: the unit tests, then a release `vN` with the signed APK.
+Work collects on the `next` branch; `main` moves only when Bryan says "ship". Every push to `main` runs
+`.github/workflows/release.yml`: the unit tests, then a release `vN` with the signed APK.
 The repo is public so the app can read its releases without a login (and public repos' Actions minutes are free).
 The key is `app/release.keystore`; its password is the `KEYSTORE_PASSWORD` secret. Keep the password: a build signed
 by another key can't update the installed app.
